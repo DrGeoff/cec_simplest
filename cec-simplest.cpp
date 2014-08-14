@@ -1,3 +1,6 @@
+// Build command:
+// g++  -std=gnu++0x -fPIC -g -Wall -march=armv6 -mfpu=vfp -mfloat-abi=hard -isystem /opt/vc/include/ -isystem /opt/vc/include/interface/vcos/pthreads/ -isystem /opt/vc/include/interface/vmcs_host/linux/ -I/usr/local/include -L /opt/vc/lib -lcec -lbcm_host cec-simplest.cpp -o cec-simplest
+
 //#CXXFLAGS=-I/usr/local/include
 //#LINKFLAGS=-lcec
 #include <libcec/cec.h>
@@ -23,17 +26,8 @@ void handle_signal(int signal)
 }
 
 
-//CEC::CBCecLogMessageType 
-//int on_log_message(void*, CEC::cec_log_message){return 0;}
-
-//CEC::CBCecCommandType 
-//int on_command(void*, CEC::cec_command){return 0;}
-
-//CEC::CBCecAlertType 
-//int on_alert(void*, CEC::libcec_alert, CEC::libcec_parameter){return 0;}
-
 //CEC::CBCecKeyPressType 
-int on_keypress(void*, const CEC::cec_keypress msg)
+int on_keypress(void* not_used, const CEC::cec_keypress msg)
 {
     std::string key;
     switch( msg.keycode )
@@ -43,6 +37,7 @@ int on_keypress(void*, const CEC::cec_keypress msg)
         case CEC::CEC_USER_CONTROL_CODE_DOWN: { key = "down"; break; }
         case CEC::CEC_USER_CONTROL_CODE_LEFT: { key = "left"; break; }
         case CEC::CEC_USER_CONTROL_CODE_RIGHT: { key = "right"; break; }
+        default: break;
     };
 
     std::cout << "on_keypress: " << static_cast<int>(msg.keycode) << " " << key << std::endl;
@@ -59,10 +54,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Initialise the graphics pipeline for the raspberry pi
+    // Initialise the graphics pipeline for the raspberry pi. Yes, this is necessary.
     bcm_host_init();
 
-    // Set up the CEC config  
+    // Set up the CEC config and specify the keypress callback function
     CEC::ICECCallbacks        cec_callbacks;
     CEC::libcec_configuration cec_config;
     cec_config.Clear();
@@ -76,10 +71,7 @@ int main(int argc, char* argv[])
     cec_config.callbacks           = &cec_callbacks;
     cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_RECORDING_DEVICE);
 
-//    cec_callbacks.CBCecLogMessage  = &on_log_message;
     cec_callbacks.CBCecKeyPress    = &on_keypress;
-//    cec_callbacks.CBCecCommand     = &on_command;
-//    cec_callbacks.CBCecAlert       = &on_alert;
 
     // Get a cec adapter by initialising the cec library
     CEC::ICECAdapter* cec_adapter = LibCecInitialise(&cec_config);
@@ -89,7 +81,7 @@ int main(int argc, char* argv[])
         return 1; 
     }
 
-    // Try and automatically determine the CEC devices 
+    // Try to automatically determine the CEC devices 
     CEC::cec_adapter devices[10];
     int8_t devices_found = cec_adapter->FindAdapters(devices, 10, NULL);
     if( devices_found <= 0)
@@ -99,7 +91,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Open a connection to the CEC adapter
+    // Open a connection to the zeroth CEC device
     if( !cec_adapter->Open(devices[0].comm) )
     {        
         std::cerr << "Failed to open the CEC device on port " << devices[0].comm << std::endl;
@@ -114,6 +106,7 @@ int main(int argc, char* argv[])
         sleep(1);
     }
 
+    // Close down and cleanup
     cec_adapter->Close();
     UnloadLibCec(cec_adapter);
 
