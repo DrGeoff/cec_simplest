@@ -2,7 +2,7 @@
 // g++  -std=gnu++0x -fPIC -g -Wall -march=armv6 -mfpu=vfp -mfloat-abi=hard -isystem /opt/vc/include/ -isystem /opt/vc/include/interface/vcos/pthreads/ -isystem /opt/vc/include/interface/vmcs_host/linux/ -I/usr/local/include -L /opt/vc/lib -lcec -lbcm_host cec-simplest.cpp -o cec-simplest
 
 //#CXXFLAGS=-I/usr/local/include
-//#LINKFLAGS=-lcec
+//#LINKFLAGS=-lcec -ldl
 #include <libcec/cec.h>
 
 // cecloader.h uses std::cout _without_ including iosfwd or iostream
