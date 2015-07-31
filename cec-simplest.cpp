@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     const std::string devicename("CECExample");
     devicename.copy(cec_config.strDeviceName, std::min(devicename.size(),13u) );
     
-    cec_config.clientVersion       = CEC::CEC_CLIENT_VERSION_CURRENT;
+    cec_config.clientVersion       = CEC::LIBCEC_VERSION_CURRENT;
     cec_config.bActivateSource     = 0;
     cec_config.callbacks           = &cec_callbacks;
     cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_RECORDING_DEVICE);
