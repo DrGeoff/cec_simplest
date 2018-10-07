@@ -1,5 +1,5 @@
 // Build command:
-// g++-4.8 -std=gnu++0x -fPIC -g -Wall -march=armv6 -mfpu=vfp -mfloat-abi=hard -isystem /opt/vc/include/ -isystem /opt/vc/include/interface/vcos/pthreads/ -isystem /opt/vc/include/interface/vmcs_host/linux/ -I/usr/local/include -L /opt/vc/lib -lcec -lbcm_host -ldl cec-simplest.cpp -o cec-simplest 
+// g++ -std=c++1z -fPIC -g -Wall -march=armv6 -mfpu=vfp -mfloat-abi=hard -isystem /opt/vc/include/ -isystem /opt/vc/include/interface/vcos/pthreads/ -isystem /opt/vc/include/interface/vmcs_host/linux/ -I/usr/local/include -L /opt/vc/lib -lcec -lbcm_host -ldl cec-simplest.cpp -o cec-simplest 
 //#CXXFLAGS=-I/usr/local/include
 //#LINKFLAGS=-lcec -ldl
 #include <libcec/cec.h>
@@ -15,6 +15,7 @@ using std::endl;
 //#LINKFLAGS=-lbcm_host
 
 #include <algorithm>  // for std::min
+#include <array>
 
 // The main loop will just continue until a ctrl-C is received
 #include <signal.h>
@@ -25,11 +26,10 @@ void handle_signal(int signal)
 }
 
 
-//CEC::CBCecKeyPressType 
-int on_keypress(void* not_used, const CEC::cec_keypress msg)
+void on_keypress(void* not_used, const CEC::cec_keypress* msg)
 {
     std::string key;
-    switch( msg.keycode )
+    switch( msg->keycode )
     {
         case CEC::CEC_USER_CONTROL_CODE_SELECT: { key = "select"; break; }
         case CEC::CEC_USER_CONTROL_CODE_UP: { key = "up"; break; }
@@ -39,8 +39,7 @@ int on_keypress(void* not_used, const CEC::cec_keypress msg)
         default: break;
     };
 
-    std::cout << "on_keypress: " << static_cast<int>(msg.keycode) << " " << key << std::endl;
-    return 0;
+    std::cout << "on_keypress: " << static_cast<int>(msg->keycode) << " " << key << std::endl;
 }
 
 
@@ -70,7 +69,7 @@ int main(int argc, char* argv[])
     cec_config.callbacks           = &cec_callbacks;
     cec_config.deviceTypes.Add(CEC::CEC_DEVICE_TYPE_RECORDING_DEVICE);
 
-    cec_callbacks.CBCecKeyPress    = &on_keypress;
+    cec_callbacks.keyPress    = &on_keypress;
 
     // Get a cec adapter by initialising the cec library
     CEC::ICECAdapter* cec_adapter = LibCecInitialise(&cec_config);
@@ -81,8 +80,8 @@ int main(int argc, char* argv[])
     }
 
     // Try to automatically determine the CEC devices 
-    CEC::cec_adapter devices[10];
-    int8_t devices_found = cec_adapter->FindAdapters(devices, 10, NULL);
+    std::array<CEC::cec_adapter_descriptor,10> devices;
+    int8_t devices_found = cec_adapter->DetectAdapters(devices.data(), devices.size(), nullptr, true /*quickscan*/);
     if( devices_found <= 0)
     {
         std::cerr << "Could not automatically determine the cec adapter devices\n";
@@ -91,9 +90,9 @@ int main(int argc, char* argv[])
     }
 
     // Open a connection to the zeroth CEC device
-    if( !cec_adapter->Open(devices[0].comm) )
+    if( !cec_adapter->Open(devices[0].strComName) )
     {        
-        std::cerr << "Failed to open the CEC device on port " << devices[0].comm << std::endl;
+        std::cerr << "Failed to open the CEC device on port " << devices[0].strComName << std::endl;
         UnloadLibCec(cec_adapter);
         return 1;
     }
