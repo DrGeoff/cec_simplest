@@ -11,11 +11,10 @@ using std::cout;
 using std::endl;
 #include <libcec/cecloader.h>
 
-#include "bcm_host.h"
-//#LINKFLAGS=-lbcm_host
-
 #include <algorithm>  // for std::min
 #include <array>
+#include <chrono>
+#include <thread>
 
 // The main loop will just continue until a ctrl-C is received
 #include <signal.h>
@@ -51,9 +50,6 @@ int main(int argc, char* argv[])
         std::cerr << "Failed to install the SIGINT signal handler\n";
         return 1;
     }
-
-    // Initialise the graphics pipeline for the raspberry pi. Yes, this is necessary.
-    bcm_host_init();
 
     // Set up the CEC config and specify the keypress callback function
     CEC::ICECCallbacks        cec_callbacks;
@@ -101,7 +97,7 @@ int main(int argc, char* argv[])
     while( !exit_now )
     {
         // nothing to do.  All happens in the CEC callback on another thread
-        sleep(1);
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
     }
 
     // Close down and cleanup
