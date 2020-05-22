@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     cec_callbacks.Clear();
 
     const std::string devicename("CECExample");
-    devicename.copy(cec_config.strDeviceName, std::min(devicename.size(),13u) );
+    devicename.copy(cec_config.strDeviceName, std::min(devicename.size(), static_cast<std::string::size_type>(13)) );
     
     cec_config.clientVersion       = CEC::LIBCEC_VERSION_CURRENT;
     cec_config.bActivateSource     = 0;
